@@ -3,12 +3,11 @@ const app = express()
 const port = 8080
 const path = require('path') 
 require('dotenv').config();
+app.use(express.static('public'));
 
 
 const URI = process.env.URI;
 const DBName = process.env.DBNAME;
- 
-
 const { MongoClient } = require('mongodb');
 const uri = URI // Replace with your MongoDB connection string
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -79,14 +78,10 @@ async function deleteCart(cartId) {
 
 
 
-
-
-
-
 //GET Requests 
 
 app.get('/', (req, res) => {
-  res.send('Hello from the MTA Surfers!')
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 })
 
 app.get('/api/cart', async (req, res) => {
