@@ -210,6 +210,9 @@ app.post('/signup', async (req, res) => {
 
 //Sign in 
 
+app.get('/signin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'signin.html'));
+});
 
 //Beaer wekjfnwefbnweoufb235t4f
 
