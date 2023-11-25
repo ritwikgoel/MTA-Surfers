@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+const bcrypt = require('bcrypt');
 const port = 8080
 const path = require('path') 
 require('dotenv').config();
@@ -119,6 +120,90 @@ app.get('/api/cart/:cartno', function(req, res) {
 
 
 //Post Requests
+
+
+
+//Sign up 
+
+app.post('/signup', async (req, res) => {
+  try {
+    // Extract data from request body
+    const { firstName, lastName, email, uni, password } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !uni || !password || !email) {
+      return res.status(400).send('First name, last name, UNI, password, and email are required');
+    }
+
+    const database = client.db('MTASurfers');
+    const users = database.collection('Users');
+
+    // Check if the user already exists
+    const existingUser = await users.findOne({ email });
+    if (existingUser) {
+      return res.status(409).send('User already exists');
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert the new user with additional fields
+    const result = await users.insertOne({
+      firstName,
+      lastName,
+      email,
+      uni,
+      password: hashedPassword,
+      isAdmin: false // Default value for isAdmin
+    });
+
+    res.status(201).send({ message: 'User created successfully', userId: result.insertedId });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
+
+
+//Sign in 
+
+
+app.post('/signin', async (req, res) => {
+  try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+          return res.status(400).send('Email and password are required');
+      }
+
+      const database = client.db('MTASurfers');
+      const users = database.collection('Users');
+
+      // Find the user by email
+      const user = await users.findOne({ email });
+
+      if (!user) {
+          return res.status(404).send('User not found');
+      }
+
+      // Compare the provided password with the stored hashed password
+      const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordMatch) {
+          return res.status(401).send('Invalid credentials');
+      }
+
+      // Handle session or token generation here (e.g., JWT token)
+      // For example, let's return a simple message
+      res.send({ message: 'You are logged in successfully', userId: user._id });
+  } catch (error) {
+      console.error('Sign in error:', error);
+      res.status(500).send('Internal server error');
+  }
+});
+
+
 app.post('/api/join/:cartno', (req, res) => {
   const dataReceived = req.body;
   // Do something with the data (in this case, just send it back)
@@ -127,6 +212,8 @@ app.post('/api/join/:cartno', (req, res) => {
 });
 
 
+
+//Admin adds the user 
 app.post('/api/addUser', async (req, res) => {
   try {
 
