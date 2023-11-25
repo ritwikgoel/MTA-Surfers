@@ -4,7 +4,17 @@ const bcrypt = require('bcrypt');
 const port = 8080
 const path = require('path') 
 require('dotenv').config();
+const bodyParser = require('body-parser');
 app.use(express.static('public'));
+const jwt = require('jsonwebtoken');
+
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
+const cors = require('cors');
+app.use(cors());
+
+app.use(bodyParser.json());
 
 
 const URI = process.env.URI;
@@ -29,6 +39,24 @@ app.use(express.json());
 
 
 //Helper Functions
+
+
+const authenticateToken = (req, res, next) => {
+  //const authHeader = req.headers['authorization'];
+  //const token = authHeader && authHeader.split(' ')[1];
+  const token = req.cookies.token; // Access the token from the httpOnly cookie
+
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) return res.sendStatus(403);
+      req.user = user;
+      next();
+  });
+};
+
+
 async function getAllUsers() {
   let result
   try {
@@ -98,11 +126,13 @@ app.get('/api/join', (req, res) => {
 
 
 
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', authenticateToken, async (req, res) => {
   result=await getAllUsers()
   //console.log('All documents in the "users" collection:');
   //console.log(result);
-  res.send(result);
+  res.send(result)
+  //res.sendFile(path.join(__dirname, 'public', 'allusers.html'));
+
 })
 
 
@@ -125,6 +155,13 @@ app.get('/api/cart/:cartno', function(req, res) {
 
 //Sign up 
 
+
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'signup.html'));
+});
+
+
+
 app.post('/signup', async (req, res) => {
   try {
     // Extract data from request body
@@ -146,18 +183,23 @@ app.post('/signup', async (req, res) => {
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-
+  
+  const user= {
+    firstName,
+    lastName,
+    email,
+    uni,
+    password: hashedPassword,
+    isAdmin: false // Default value for isAdmin
+  }
     // Insert the new user with additional fields
-    const result = await users.insertOne({
-      firstName,
-      lastName,
-      email,
-      uni,
-      password: hashedPassword,
-      isAdmin: false // Default value for isAdmin
-    });
+    const result = await users.insertOne(user);
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour
+    res.redirect('/');
+    res.status(201).send({ message: 'User created successfully', userId: result.insertedId });//redirect this to /
+    // res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 
-    res.status(201).send({ message: 'User created successfully', userId: result.insertedId });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).send('Internal server error');
@@ -168,6 +210,8 @@ app.post('/signup', async (req, res) => {
 
 //Sign in 
 
+
+//Beaer wekjfnwefbnweoufb235t4f
 
 app.post('/signin', async (req, res) => {
   try {
@@ -196,7 +240,9 @@ app.post('/signin', async (req, res) => {
 
       // Handle session or token generation here (e.g., JWT token)
       // For example, let's return a simple message
-      res.send({ message: 'You are logged in successfully', userId: user._id });
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour
+      res.send({ message: 'You are logged in successfully', userId: user._id, token: token });
   } catch (error) {
       console.error('Sign in error:', error);
       res.status(500).send('Internal server error');
