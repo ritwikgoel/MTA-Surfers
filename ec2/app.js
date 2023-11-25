@@ -6,9 +6,19 @@ const path = require('path')
 require('dotenv').config();
 const bodyParser = require('body-parser');
 app.use(express.static('public'));
+const { ObjectId } = require('mongodb');
+
 const jwt = require('jsonwebtoken');
 
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
+
 const cookieParser = require('cookie-parser');
+app.use(session({ secret: 'Do this later', resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(cookieParser());
 
 const cors = require('cors');
@@ -39,6 +49,85 @@ app.use(express.json());
 
 
 //Helper Functions
+
+
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.CLIENTID,
+  clientSecret: process.env.CLIENTSECRET,
+  callbackURL: 'http://localhost:8080/auth/google/callback'
+},
+async (accessToken, refreshToken, profile, cb) => {
+  try {
+    // Check if user already exists in the database
+    usersCollection = database.collection("Users");
+    let user = await usersCollection.findOne({ googleId: profile.id });
+
+    if (!user) {
+      const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+
+      // If user doesn't exist, create a new one
+      console.log("PROFILE IS :::::::  ",profile)
+      const newUser = {
+        googleId: profile.id,
+        firstName: profile.name.givenName,
+        lastName: profile.name.familyName,
+        email: email,
+        // Add any additional fields you require
+      };
+
+      const result = await usersCollection.insertOne(newUser);
+      // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      // res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour
+      console.log("Result::::::: "+result.insertedId)
+      //user = result.ops[0]; 
+      const userId = new ObjectId(result.insertedId); // Convert the insertedId string to an ObjectId
+      user = await usersCollection.findOne({ _id: userId });
+  
+    }
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      
+    // Add the token to the user object so it can be used in the callback
+    user.token = token;
+
+    return cb(null, user);
+  } catch (error) {
+    return cb(error, null);
+  }
+}
+));
+
+passport.serializeUser((user, cb) => {
+cb(null, user.googleId); // Store only the googleId in the session
+});
+
+passport.deserializeUser(async (id, cb) => {
+try {
+  const user = await usersCollection.findOne({ googleId: id });
+  cb(null, user);
+} catch (error) {
+  cb(error, null);
+}
+});
+
+
+
+
+
+// Route to start authentication
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Google auth callback
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Successful authentication
+    if (req.user && req.user.token) {
+      res.cookie('token', req.user.token, { httpOnly: true, secure: true, maxAge: 3600000 });
+    }
+    res.redirect('/');
+  }
+);
 
 
 const authenticateToken = (req, res, next) => {
