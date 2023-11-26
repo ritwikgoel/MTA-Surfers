@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .signin-form {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-control {
+            margin-bottom: 10px;
+        }
+        .form-control label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-control input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .form-control button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 3px;
+            background-color: blue;
+            color: white;
+            cursor: pointer;
+        }
+        .form-control button:hover {
+            background-color: darkblue;
+        }
+    </style>
+</head>
+<body>
+    <div class="signin-form">
+        <h2>Sign In</h2>
+        <div class="form-control">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-control">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-control">
+            <button type="button" onclick="submitForm()">Sign In</button>
+        </div>
+    </div>
+
+    <script>
+        function submitForm() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            fetch('http://localhost:8080/signin', { // Replace with your API endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    // Here, handle the login success. For example, store the token and redirect.
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/'; // Redirect to the dashboard or home page
+                } else {
+                    alert('Login failed!');
+                }
+            })
+            .catch(error => {
+                console.error('Error during sign in:', error);
+                alert('Error during sign in!');
+            });
+        }
+    </script>
+
+<a href="/auth/google">Sign in with Google</a>
+
+</body>
+</html>

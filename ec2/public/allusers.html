@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .card {
+            background-color: #f4f4f4;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            margin: 15px;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .card h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="users-container"></div>
+
+    <script>
+        const usersContainer = document.getElementById('users-container');
+
+        fetch('http://localhost:8080/api/users') // Replace with your local API endpoint
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(users => {
+                users.forEach(user => {
+                    const userCard = document.createElement('div');
+                    userCard.className = 'card';
+                    userCard.innerHTML = `
+                        <h3>${user.firstName} ${user.lastName}</h3>
+                        <p>Email: ${user.email}</p>
+                        <p>UNI: ${user.uni}</p>
+                        <p>Admin: ${user.isAdmin ? 'Yes' : 'No'}</p>
+                    `;
+                    usersContainer.appendChild(userCard);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching users:', error);
+                usersContainer.innerHTML = '<p>Error loading users.</p>';
+            });
+    </script>
+</body>
+</html>
