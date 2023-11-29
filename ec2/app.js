@@ -7,24 +7,20 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 app.use(express.static('public'));
 const { ObjectId } = require('mongodb');
-
 const jwt = require('jsonwebtoken');
-
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
-
 const cookieParser = require('cookie-parser');
+const AWS = require('aws-sdk');
 app.use(session({ secret: 'Do this later', resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
-
 app.use(cookieParser());
-
 const cors = require('cors');
 app.use(cors());
-
 app.use(bodyParser.json());
+
 
 
 const URI = process.env.URI;
@@ -48,10 +44,44 @@ connectToDatabase();
 app.use(express.json());
 
 
-//Helper Functions
+//AWS Lambda stuff
+//Do this 
+// Configure AWS SDK with your credentials
+
+const accessKeyId = process.env.ACCESSKEYID;
+const secretAccessKey = process.env.SECRETACCESSKEY;
+const TopicArn = process.env.TOPICARN;
 
 
 
+AWS.config.update({
+  accessKeyId: accessKeyId,
+  secretAccessKey: secretAccessKey,
+  region: 'us-east-1'
+});
+
+// Create an SNS object
+const sns = new AWS.SNS();
+
+// Publish a message to the SNS topic
+sns.publish({
+  TopicArn: TopicArn,
+  Message: 'Your message payload',
+}, (err, data) => {
+  if (err) {
+    console.error('Error publishing to SNS:', err);
+  } else {
+    console.log('Message published to SNS:', data);
+  }
+});
+
+
+
+
+
+
+
+//Google Auth
 passport.use(new GoogleStrategy({
   clientID: process.env.CLIENTID,
   clientSecret: process.env.CLIENTSECRET,
@@ -129,6 +159,10 @@ app.get('/auth/google/callback',
   }
 );
 
+
+
+
+//Helper Functions
 
 const authenticateToken = (req, res, next) => {
   //const authHeader = req.headers['authorization'];
@@ -385,10 +419,6 @@ app.post('/api/addUser', async (req, res) => {
 
 
 
-
-
-
-
 //Delete Functions
 
 app.delete('/api/cart/:cartId', async (req, res) => {
@@ -402,12 +432,6 @@ app.delete('/api/cart/:cartId', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
-
-
-
-
 
 
 //PUT Operations 
