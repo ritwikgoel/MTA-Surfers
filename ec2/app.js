@@ -1,35 +1,39 @@
 const express = require('express')
+const app = express()
 const bcrypt = require('bcrypt');
+const port = 8080
 const path = require('path') 
+require('dotenv').config();
 const bodyParser = require('body-parser');
+app.use(express.static('public'));
 const { ObjectId } = require('mongodb');
+
 const jwt = require('jsonwebtoken');
+
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
 
-require('dotenv').config();
-app.use(express.static('public'));
+const cookieParser = require('cookie-parser');
 app.use(session({ secret: 'Do this later', resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(cookieParser());
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.json());
 
-const app = express()
-const port = 8080
+app.use(cookieParser());
+
+const cors = require('cors');
+app.use(cors());
+
+app.use(bodyParser.json());
+
+
 const URI = process.env.URI;
 const DBName = process.env.DBNAME;
 const { MongoClient } = require('mongodb');
-const uri = URI 
+const uri = URI // Replace with your MongoDB connection string
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 const database = client.db(DBName);
 
-//Database Connection
 async function connectToDatabase() {
   try {
     await client.connect();
@@ -38,11 +42,15 @@ async function connectToDatabase() {
     console.error('Error connecting to MongoDB', error);
   }
 }
+
 connectToDatabase();
 
+app.use(express.json());
 
 
-//Google O-Auth
+//Helper Functions
+
+
 
 passport.use(new GoogleStrategy({
   clientID: process.env.CLIENTID,
@@ -54,8 +62,10 @@ async (accessToken, refreshToken, profile, cb) => {
     // Check if user already exists in the database
     usersCollection = database.collection("Users");
     let user = await usersCollection.findOne({ googleId: profile.id });
+
     if (!user) {
       const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+
       // If user doesn't exist, create a new one
       console.log("PROFILE IS :::::::  ",profile)
       const newUser = {
@@ -65,6 +75,7 @@ async (accessToken, refreshToken, profile, cb) => {
         email: email,
         // Add any additional fields you require
       };
+
       const result = await usersCollection.insertOne(newUser);
       // const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
       // res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour
@@ -85,9 +96,11 @@ async (accessToken, refreshToken, profile, cb) => {
   }
 }
 ));
+
 passport.serializeUser((user, cb) => {
 cb(null, user.googleId); // Store only the googleId in the session
 });
+
 passport.deserializeUser(async (id, cb) => {
 try {
   const user = await usersCollection.findOne({ googleId: id });
@@ -96,6 +109,11 @@ try {
   cb(error, null);
 }
 });
+
+
+
+
+
 // Route to start authentication
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -112,23 +130,22 @@ app.get('/auth/google/callback',
 );
 
 
-
-
-
-
-//Helper Functions
-
 const authenticateToken = (req, res, next) => {
   //const authHeader = req.headers['authorization'];
   //const token = authHeader && authHeader.split(' ')[1];
   const token = req.cookies.token; // Access the token from the httpOnly cookie
+
+
   if (token == null) return res.sendStatus(401);
+
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (err) return res.sendStatus(403);
       req.user = user;
       next();
   });
 };
+
+
 async function getAllUsers() {
   let result
   try {
@@ -142,6 +159,7 @@ async function getAllUsers() {
     console.error('Error retrieving documents:', error);
   } 
 }
+
 async function getAllCarts() {
   let result
   try {
@@ -155,6 +173,9 @@ async function getAllCarts() {
     console.error('Error retrieving documents:', error);
   } 
 }
+
+
+
 async function deleteCart(cartId) {
   const collectionName = 'Carts';
   try {
@@ -203,6 +224,8 @@ app.get('/getRandomData', async (req, res) => {
   }
 });
 
+
+
 app.get('/api/users', authenticateToken, async (req, res) => {
   result=await getAllUsers()
   //console.log('All documents in the "users" collection:');
@@ -211,6 +234,9 @@ app.get('/api/users', authenticateToken, async (req, res) => {
   //res.sendFile(path.join(__dirname, 'public', 'allusers.html'));
 
 })
+
+
+
 
 app.get('/api/cart/:cartno', function(req, res) {
   console.log("Cart received is : " + req.params.cartno);
@@ -224,28 +250,40 @@ app.get('/api/cart/:cartno', function(req, res) {
 
 
 //Post Requests
+
+
+
 //Sign up 
+
+
 app.get('/signup', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
+
+
 
 app.post('/signup', async (req, res) => {
   try {
     // Extract data from request body
     const { firstName, lastName, email, uni, password } = req.body;
+
     // Validate required fields
     if (!firstName || !lastName || !uni || !password || !email) {
       return res.status(400).send('First name, last name, UNI, password, and email are required');
     }
+
     const database = client.db('MTASurfers');
     const users = database.collection('Users');
+
     // Check if the user already exists
     const existingUser = await users.findOne({ email });
     if (existingUser) {
       return res.status(409).send('User already exists');
     }
+
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
+  
   const user= {
     firstName,
     lastName,
@@ -261,34 +299,50 @@ app.post('/signup', async (req, res) => {
     res.redirect('/');
     res.status(201).send({ message: 'User created successfully', userId: result.insertedId });//redirect this to /
     // res.sendFile(path.join(__dirname, 'public', 'signup.html'));
+
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).send('Internal server error');
   }
 });
-//Sign in -> Helper 
+
+
+
+//Sign in 
+
 app.get('/signin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signin.html'));
 });
+
 //Beaer wekjfnwefbnweoufb235t4f
+
 app.post('/signin', async (req, res) => {
   try {
       const { email, password } = req.body;
+
       if (!email || !password) {
           return res.status(400).send('Email and password are required');
       }
+
       const database = client.db('MTASurfers');
       const users = database.collection('Users');
+
       // Find the user by email
       const user = await users.findOne({ email });
+
       if (!user) {
           return res.status(404).send('User not found');
       }
+
       // Compare the provided password with the stored hashed password
       const isPasswordMatch = await bcrypt.compare(password, user.password);
+
       if (!isPasswordMatch) {
           return res.status(401).send('Invalid credentials');
       }
+
+      // Handle session or token generation here (e.g., JWT token)
+      // For example, let's return a simple message
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
       res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour
       res.send({ message: 'You are logged in successfully', userId: user._id, token: token });
@@ -298,12 +352,15 @@ app.post('/signin', async (req, res) => {
   }
 });
 
+
 app.post('/api/join/:cartno', (req, res) => {
   const dataReceived = req.body;
   // Do something with the data (in this case, just send it back)
   res.json(dataReceived);
   console.log(dataReceived);
 });
+
+
 
 //Admin adds the user 
 app.post('/api/addUser', async (req, res) => {
@@ -326,6 +383,12 @@ app.post('/api/addUser', async (req, res) => {
 
 
 
+
+
+
+
+
+
 //Delete Functions
 
 app.delete('/api/cart/:cartId', async (req, res) => {
@@ -339,6 +402,10 @@ app.delete('/api/cart/:cartId', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+
+
 
 
 
@@ -368,7 +435,11 @@ app.put('/api/user/:uni', async (req, res) => {
   }
 });
 
-//testing after this
+
+
+
+
+//testing 
 
 // Synchronous Call - Client Side Script
 async function synchronousCall() {
@@ -431,6 +502,8 @@ app.get('/api/aggregated/async', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 
 app.listen(port, () => {
