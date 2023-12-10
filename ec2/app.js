@@ -7,6 +7,8 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 app.use(express.static('public'));
 const { ObjectId } = require('mongodb');
+const axios = require('axios');
+
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -24,6 +26,7 @@ app.use(bodyParser.json());
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 
+const graphqlEndpoint = 'http://localhost:8080/graphql'; // Add this line to define the GraphQL endpoint
 
 
 const schema = buildSchema(`
@@ -102,44 +105,36 @@ sns.publish({
 // this is for grap[h qwl 
 
 const root = {
-  // getUser: async ({ id }) => {
-  //   // Your logic to fetch a user by ID
-  // },
   getAllUsers: async () => {
-    // Your logic to fetch all users
     try {
-      const response = await axios.post(
-        graphqlEndpoint,
-        {
-          query: `
-            query {
-              getAllUsers {
-                id
-                firstName
-                lastName
-                email
-              }
-            }
-          `,
-        }
-      );
-  
-      console.log(response.data.data.getAllUsers);
-    } catch (error) {
-      console.error('Error fetching all users:', error);
-    }
+      const usersCollection = database.collection('Users');
+      const users = await usersCollection.find({}).toArray();
+      console.log('Users from the database:', users);
+      // this is wokring 
+      //Figure out after this
+      const response = {
+        getAllUsers: users,
+      };
 
+      console.log('GraphQL response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error fetching all users from the database:', error);
+      throw error;
+    }
   },
-  // addUser: async ({ firstName, lastName, email }) => {
-  //   // Your logic to add a new user
-  // },
 };
 
-app.use('/graphql', graphqlHTTP({
-  schema: schema,
-  rootValue: root,
-  graphiql: false, // Enable GraphiQL interface for testing
-}));
+
+
+app.use('/graphql', (req, res, next) => {
+  console.log('Received GraphQL request:', req.body); // Log the request body
+  graphqlHTTP({
+    schema: schema,
+    rootValue: root,
+    graphiql: false,
+  })(req, res, next);
+});
 
 
 
