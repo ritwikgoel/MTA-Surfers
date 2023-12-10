@@ -21,6 +21,29 @@ const cors = require('cors');
 app.use(cors());
 app.use(bodyParser.json());
 
+const { graphqlHTTP } = require('express-graphql');
+const { buildSchema } = require('graphql');
+
+
+
+const schema = buildSchema(`
+  type User {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    email: String!
+  }
+
+  type Query {
+    getUser(id: ID!): User
+    getAllUsers: [User]
+  }
+
+  type Mutation {
+    addUser(firstName: String!, lastName: String!, email: String!): User
+  }
+`);
+
 
 
 const URI = process.env.URI;
@@ -76,7 +99,47 @@ sns.publish({
 });
 
 
+// this is for grap[h qwl 
 
+const root = {
+  // getUser: async ({ id }) => {
+  //   // Your logic to fetch a user by ID
+  // },
+  getAllUsers: async () => {
+    // Your logic to fetch all users
+    try {
+      const response = await axios.post(
+        graphqlEndpoint,
+        {
+          query: `
+            query {
+              getAllUsers {
+                id
+                firstName
+                lastName
+                email
+              }
+            }
+          `,
+        }
+      );
+  
+      console.log(response.data.data.getAllUsers);
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+    }
+
+  },
+  // addUser: async ({ firstName, lastName, email }) => {
+  //   // Your logic to add a new user
+  // },
+};
+
+app.use('/graphql', graphqlHTTP({
+  schema: schema,
+  rootValue: root,
+  graphiql: false, // Enable GraphiQL interface for testing
+}));
 
 
 
