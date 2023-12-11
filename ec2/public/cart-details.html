@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Details</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .cart-details {
+            border: 1px solid #ccc;
+            margin: 20px auto;
+            padding: 20px;
+            width: 80%;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-details h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li {
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <button onclick="location.href='home.html'">Home</button>
+        <button onclick="location.href='signout.html'">Sign Out</button>
+    </nav>
+
+    <h1>Cart Details</h1>
+
+    <div class="cart-details">
+        <h2>Manifesto</h2>
+        <ul>
+            <li>Item 1 - $10 - Student A</li>
+            <li>Item 2 - $20 - Student B</li>
+        </ul>
+
+        <h2>Add Item</h2>
+        <form>
+            <label for="product">Product:</label>
+            <input type="text" id="product" name="product" required>
+
+            <label for="value">Value:</label>
+            <input type="text" id="value" name="value" required>
+
+            <button type="button" onclick="addItem()">Add</button>
+        </form>
+    </div>
+
+    <script>
+        function addItem() {
+            // Add your logic to update the cart here
+            alert('Item added to the cart!');
+        }
+    </script>
+</body>
+</html>
