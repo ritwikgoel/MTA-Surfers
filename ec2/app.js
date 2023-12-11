@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 app.use(express.static('public'));
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
-
+const graphql = require('graphql');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -26,8 +26,11 @@ app.use(bodyParser.json());
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 
-const graphqlEndpoint = 'http://localhost:8080/graphql'; // Add this line to define the GraphQL endpoint
-
+const { 
+  GraphQLObjectType, GraphQLString, 
+  GraphQLID, GraphQLInt,GraphQLSchema, 
+  GraphQLList,GraphQLNonNull 
+} = graphql;
 
 const schema = buildSchema(`
   type User {
@@ -35,17 +38,20 @@ const schema = buildSchema(`
     firstName: String!
     lastName: String!
     email: String!
+    uni: String!
   }
 
   type Query {
     getUser(id: ID!): User
     getAllUsers: [User]
   }
+  
 
   type Mutation {
     addUser(firstName: String!, lastName: String!, email: String!): User
   }
 `);
+
 
 
 
@@ -132,7 +138,7 @@ app.use('/graphql', (req, res, next) => {
   graphqlHTTP({
     schema: schema,
     rootValue: root,
-    graphiql: false,
+    graphiql: true,
   })(req, res, next);
 });
 
