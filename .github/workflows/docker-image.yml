@@ -28,3 +28,14 @@ jobs:
 
     - name: Build the Docker image
       run: docker build ./dockerserver --file ./dockerserver/Dockerfile --tag my-image-name:$(date +%s)
+        
+  backend-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install backend dependencies
+      run: npm install
+      working-directory: ./ec2
+    - name: Run backend tests
+      run: npm test
+      working-directory: ./ec2
