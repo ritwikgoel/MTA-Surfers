@@ -20,9 +20,11 @@ jobs:
 
     - name: Install Dependencies
       run: npm install
+      working-directory: ./mta
 
     - name: Run Tests
       run: npm test
+      working-directory: ./mta
 
     - name: Build the Docker image
       run: docker build ./dockerserver --file ./dockerserver/Dockerfile --tag my-image-name:$(date +%s)
