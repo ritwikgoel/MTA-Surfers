@@ -7,12 +7,22 @@ on:
     branches: [ "main" ]
 
 jobs:
-
-  build:
-
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '14' # Replace with your Node.js version
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Run Tests
+      run: npm test
+
     - name: Build the Docker image
       run: docker build ./dockerserver --file ./dockerserver/Dockerfile --tag my-image-name:$(date +%s)
