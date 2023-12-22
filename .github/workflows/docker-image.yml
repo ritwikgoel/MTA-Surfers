@@ -39,3 +39,49 @@ jobs:
     - name: Run backend tests
       run: npm test
       working-directory: ./ec2
+  deploy:
+    needs: [frontend-test, backend-test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Ensure we're on the main branch
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install SSH Client
+        run: sudo apt-get update && sudo apt-get install -y openssh-client
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+      - name: Deploy to EC2
+        env:
+          EC2_PUBLIC_IP: "18.119.120.49" # Your EC2 instance's public IP address
+        run: |
+          ssh -o "StrictHostKeyChecking=no" ec2-user@$EC2_PUBLIC_IP << 'EOF'
+            # Commands to pull code, start microservice, check if it's working, and then clean up
+            cd ~/6156/ec2
+
+            # Example: Pull the latest code from the repository
+            git pull origin main
+            # Install any new dependencies
+            npm install
+
+            # Example: Start the microservice 
+            nohup npm start > app.log 2>&1 &
+
+            # Example: Health check using curl 
+            sleep 10
+            if grep -q "Listening on" app.log; then
+              echo "Application started successfully"
+            else
+              echo "Application failed to start"
+              exit 1
+            fi
+
+            # Example: Kill the process 
+            pkill -f "node"
+
+            # Exit from the EC2 instance
+            exit
+          EOF
