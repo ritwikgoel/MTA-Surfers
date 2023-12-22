@@ -35,7 +35,7 @@ const {
 
 const schema = buildSchema(`
   type User {
-    id: ID!
+    _id: ID!
     firstName: String!
     lastName: String!
     email: String!
@@ -43,15 +43,15 @@ const schema = buildSchema(`
   }
 
   type Query {
-    getUser(id: ID!): User
+    getUser(_id: ID!): User
     getAllUsers: [User]
   }
-  
 
   type Mutation {
     addUser(firstName: String!, lastName: String!, email: String!): User
   }
 `);
+
 
 
 
@@ -110,38 +110,78 @@ sns.publish({
 
 
 // this is for grap[h qwl 
-
 const root = {
   getAllUsers: async () => {
     try {
       const usersCollection = database.collection('Users');
       const users = await usersCollection.find({}).toArray();
-      console.log('Users from the database:', users);
-      // this is wokring 
-      //Figure out after this
-      const response = {
-        getAllUsers: users,
-      };
-
-      console.log('GraphQL response:', response);
-      return response;
+      return users.map(user => ({
+        _id: user._id.toString(), // Ensure _id is mapped and converted to string
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        uni: user.uni
+      }));
     } catch (error) {
-      console.error('Error fetching all users from the database:', error);
-      throw error;
+      console.error('Error fetching all users:', error);
+      throw new Error('Error fetching users');
     }
   },
+
+  getUser: async ({ id }) => {
+    try {
+      const usersCollection = database.collection('Users');
+      const user = await usersCollection.findOne({ _id: new ObjectId(id) });
+      return user ? {
+        id: user._id.toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        uni: user.uni
+      } : null;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw new Error('Error fetching user');
+    }
+  },
+
+  addUser: async ({ firstName, lastName, email, uni }) => {
+    try {
+      const usersCollection = database.collection('Users');
+      const newUser = { firstName, lastName, email, uni };
+      const result = await usersCollection.insertOne(newUser);
+      return { 
+        id: result.insertedId.toString(),
+        firstName, 
+        lastName, 
+        email, 
+        uni 
+      };
+    } catch (error) {
+      console.error('Error adding user:', error);
+      throw new Error('Error adding user');
+    }
+  }
 };
 
 
+// query {
+//   getAllUsers {
+//     _id
+//     firstName
+//     lastName
+//     email
+//     uni
+//   }
+// }
 
-app.use('/graphql', (req, res, next) => {
-  console.log('Received GraphQL request:', req.body); // Log the request body
-  graphqlHTTP({
-    schema: schema,
-    rootValue: root,
-    graphiql: true,
-  })(req, res, next);
-});
+//This query is now working properly
+
+app.use('/graphql', graphqlHTTP({
+  schema: schema,
+  rootValue: root,
+  graphiql: true,
+}));
 
 
 
