@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Display</title>
+</head>
+<body>
+    <h1>Meme of the Day</h1>
+    <img id="memeImage" src="" alt="Meme Image" />
+
+    <script>
+        window.onload = async function() {
+            const memeUrl = 'https://apimeme.com/meme?meme=Alan-Greenspan&top=Cloud+Computing+&bottom=Cloud+Computing+';
+            document.getElementById('memeImage').src = memeUrl;
+        };
+    </script>
+</body>
+</html>
