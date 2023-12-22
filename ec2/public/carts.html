@@ -19,6 +19,10 @@
         th {
             background-color: #f2f2f2;
         }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -36,6 +40,12 @@
             <!-- Cart data will be inserted here -->
         </tbody>
     </table>
+
+    <div class="pagination">
+        <!-- Pagination button -->
+        <button id="paginationButton">Page 1/1</button>
+    </div>
+
     <script>
         // This script will run after the page loads
         window.onload = function() {
