@@ -676,6 +676,29 @@ app.put('/api/user/:uni', async (req, res) => {
   }
 });
 
+app.get('/api/updateUser', async (req, res) => {
+  const { uni, firstName, lastName } = req.query;
+  const collection = database.collection('Users');
+  try {
+      const updatedUser = await collection.findOneAndUpdate(
+          { uni: uni },
+          { $set: { firstName, lastName } },
+          { returnOriginal: false }
+      );
+
+      if (updatedUser.value) {
+          res.json({ success: true, updatedUser: updatedUser.value });
+      } else {
+          res.status(404).send('User not found');
+      }
+  } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
 
 
 
