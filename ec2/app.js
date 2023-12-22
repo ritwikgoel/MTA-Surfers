@@ -301,12 +301,36 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 })
 
+// app.get('/api/cart', async (req, res) => {
+//   result=await getAllCarts()
+//   //console.log('All documents in the "users" collection:');
+//   //console.log(result);
+//   res.send(result);
+// })
+
 app.get('/api/cart', async (req, res) => {
-  result=await getAllCarts()
-  //console.log('All documents in the "users" collection:');
-  //console.log(result);
-  res.send(result);
-})
+  const result = await getAllCarts();
+
+  // Read the HTML file
+  const htmlFilePath = path.join(__dirname, 'public', 'carts.html');
+  fs.readFile(htmlFilePath, 'utf8', (err, htmlContent) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+
+    // Embed the cart data into the HTML
+    const modifiedHtmlContent = htmlContent.replace(
+      '<!-- Cart data will be inserted here -->',
+      `<script>const carts = ${JSON.stringify(result)};</script>`
+    );
+
+    // Send the modified HTML file content as a response
+    res.send(modifiedHtmlContent);
+  });
+});
+
 
 app.get('/api/join', (req, res) => {
   res.send('All the cart info is here :)')
@@ -505,6 +529,47 @@ app.post('/api/addUser', async (req, res) => {
   }
 });
 
+
+
+//Create cart 
+// POST request to create a new cart
+app.post('/api/cart', async (req, res) => {
+  try {
+    const { shopper_id, items, total_value } = req.body;
+
+    const cartData = {
+      shopper_id,
+      items,
+      total_value,
+      usersInCart: [shopper_id] // Initialize with the shopper_id
+    };
+
+    const cartsCollection = database.collection('Carts');
+    const result = await cartsCollection.insertOne(cartData);
+
+    res.status(201).json({ message: 'Cart created successfully', insertedId: result.insertedId });
+  } catch (error) {
+    console.error('Error creating cart:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+//Adding tot he cart 
+app.put('/api/cart/addUser', async (req, res) => {
+  try {
+    const { cartId, userId } = req.body;
+
+    const cartsCollection = database.collection('Carts');
+    await cartsCollection.updateOne(
+      { _id: new ObjectId(cartId) }, // Use 'new' to create a new ObjectId instance
+      { $addToSet: { usersInCart: userId } } // Use $addToSet to avoid duplicates
+    );
+
+    res.json({ message: 'User added to the cart successfully' });
+  } catch (error) {
+    console.error('Error adding user to cart:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 

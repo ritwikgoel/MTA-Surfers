@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart List</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Carts</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cart ID</th>
+                <th>Shopper ID</th>
+                <th>Total Value</th>
+            </tr>
+        </thead>
+        <tbody id="cartTable">
+            <!-- Cart data will be inserted here -->
+        </tbody>
+    </table>
+    <script>
+        // This script will run after the page loads
+        window.onload = function() {
+            // Assuming 'carts' variable is populated with cart data from the server
+            const tableBody = document.getElementById('cartTable');
+            carts.forEach(cart => {
+                const row = `<tr>
+                    <td>${cart._id}</td>
+                    <td>${cart.cart_id}</td>
+                    <td>${cart.shopper_id}</td>
+                    <td>${cart.total_value}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        };
+    </script>
+</body>
+</html>
