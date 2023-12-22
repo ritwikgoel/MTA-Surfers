@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Cart</title>
+</head>
+<body>
+    <h1>Delete Cart</h1>
+    <form id="deleteCartForm">
+        <label for="cartId">Cart ID:</label><br>
+        <input type="text" id="cartId" name="cartId" required><br>
+        <input type="submit" value="Delete Cart">
+    </form>
+
+    <script>
+        document.getElementById('deleteCartForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const cartId = document.getElementById('cartId').value;
+            try {
+                const response = await fetch('/api/cart/' + cartId, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                alert('Response: ' + JSON.stringify(result));
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        };
+    </script>
+</body>
+</html>
