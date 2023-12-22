@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Cart</title>
+</head>
+<body>
+    <h1>Create a New Cart</h1>
+    <form id="createCartForm">
+        <label for="shopperId">Shopper ID:</label><br>
+        <input type="text" id="shopperId" name="shopperId" required><br><br>
+
+        <label for="items">Items:</label><br>
+        <textarea id="items" name="items" rows="5" cols="33" placeholder='Enter items as JSON array, e.g., [{"productId": "123", "quantity": 2}]' required></textarea><br><br>
+
+        <label for="totalValue">Total Value (optional):</label><br>
+        <input type="number" id="totalValue" name="totalValue" step="0.01"><br><br>
+
+        <input type="submit" value="Create Cart">
+    </form>
+
+    <script>
+        document.getElementById('createCartForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const shopperId = document.getElementById('shopperId').value;
+            const items = JSON.parse(document.getElementById('items').value);
+            const totalValue = document.getElementById('totalValue').value;
+
+            const cartData = {
+                shopper_id: shopperId,
+                items: items,
+                total_value: totalValue
+            };
+
+            fetch('/api/cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(cartData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Cart created successfully!');
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error creating cart:', error);
+                alert('Error creating cart');
+            });
+        });
+    </script>
+</body>
+</html>
