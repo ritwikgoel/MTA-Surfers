@@ -6,20 +6,18 @@
     <title>Welcome to MTA Surfers</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<style>
-    
-</style>
 <body>
     <header>
         <nav>
-            <ul>
+            <ul id="nav-list">
                 <li><a href="/">Home</a></li>
-                <li><a href="/about">About</a></li>
+                <li><a href="/">About</a></li>
                 <li><a href="/api/users">All Users</a></li>
                 <li><a href="/api/cart">All Carts</a></li>
                 <li><a href="/create_cart.html">Create Carts</a></li>
-                <li><a href="/signin">Login</a></li> 
-                <li><a href="/signup">Sign Up</a></li> 
+                <li id="signin"><a href="/signin">Login</a></li>
+                <li id="signup"><a href="/signup">Sign Up</a></li>
+                <li id="user-greeting" style="display: none;">Hello, <span id="username"></span></li>
             </ul>
         </nav>
     </header>
@@ -41,15 +39,30 @@
                 <button onclick="location.href='cart-details.html'">Join</button>
             </div>
             <div class="cart-option">
-                <h2>Cart Option 2</h2>
+                <h2>Cart Option 3</h2>
                 <p>Total Cart Value: $40</p>
                 <p>Value Looking For: $80</p>
                 <p>Retailer: Nike</p>
                 <button onclick="location.href='cart-details.html'">Join</button>
             </div>
+        </div>
     </main>
     <footer>
         <p>&copy; 2023 MTA Surfers</p>
     </footer>
+
+    <script>
+        function checkUser() {
+            const token = localStorage.getItem('userToken');
+            if (token) {
+                document.getElementById('signin').style.display = 'none';
+                document.getElementById('signup').style.display = 'none';
+                document.getElementById('user-greeting').style.display = 'block';
+                const userName = localStorage.getItem('userName');
+                document.getElementById('username').textContent = userName;
+            }
+        }
+        window.onload = checkUser;
+    </script>
 </body>
 </html>

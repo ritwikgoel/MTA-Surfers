@@ -308,6 +308,7 @@ async function getAllUsers() {
     console.error('Error retrieving documents:', error);
   } 
 }
+//DO THIS NOW -> PAGINATION next part is not working
 
 async function getAllCarts() {
   let result
@@ -347,9 +348,20 @@ async function deleteCart(cartId) {
 
 //GET Requests 
 
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// })
+
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-})
+  if (req.isAuthenticated()) {
+      // User is logged in
+      res.render('index', { user: req.user });
+  } else {
+      // User is not logged in
+      res.render('index', { user: null });
+  }
+});
+
 
 // app.get('/api/cart', async (req, res) => {
 //   result=await getAllCarts()
