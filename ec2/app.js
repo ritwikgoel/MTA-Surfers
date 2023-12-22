@@ -27,6 +27,16 @@ app.use(bodyParser.json());
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 
+
+function loggerMiddleware(req, res, next) {
+  const now = new Date();
+  console.log("From the middleware: Every time a requst is made, it will call this middleware")
+  console.log(`${now.toISOString()} - ${req.method} ${req.originalUrl}`);
+  next();
+}
+app.use(loggerMiddleware);
+
+
 const { 
   GraphQLObjectType, GraphQLString, 
   GraphQLID, GraphQLInt,GraphQLSchema, 
