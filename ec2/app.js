@@ -19,6 +19,7 @@ app.use(session({ secret: 'Do this later', resave: false, saveUninitialized: fal
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());
+const fs = require('fs'); // Import the fs module
 const cors = require('cors');
 app.use(cors());
 app.use(bodyParser.json());
@@ -324,14 +325,39 @@ app.get('/getRandomData', async (req, res) => {
 
 
 
-app.get('/api/users', authenticateToken, async (req, res) => {
-  result=await getAllUsers()
-  //console.log('All documents in the "users" collection:');
-  //console.log(result);
-  res.send(result)
-  //res.sendFile(path.join(__dirname, 'public', 'allusers.html'));
+// app.get('/api/users', authenticateToken, async (req, res) => {
+//   result=await getAllUsers()
+//   //console.log('All documents in the "users" collection:');
+//   //console.log(result);
+//   res.send(result)
+//   //res.sendFile(path.join(__dirname, 'public', 'allusers.html'));
 
-})
+// })
+
+
+app.get('/api/users', authenticateToken, async (req, res) => {
+  const result = await getAllUsers();
+
+  // Read the HTML file
+  const htmlFilePath = path.join(__dirname, 'public', 'users.html');
+  fs.readFile(htmlFilePath, 'utf8', (err, htmlContent) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+
+    // Embed the user data into the HTML
+    const modifiedHtmlContent = htmlContent.replace(
+      '<!-- User data will be inserted here -->',
+      `<script>const users = ${JSON.stringify(result)};</script>`
+    );
+
+    // Send the modified HTML file content as a response
+    res.send(modifiedHtmlContent);
+  });
+});
+
 
 
 
