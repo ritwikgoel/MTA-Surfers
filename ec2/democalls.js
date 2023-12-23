@@ -1,62 +1,49 @@
-// democalls.js
-
 const fetch = require('node-fetch');
 
-const token = '';
 
-async function fetchData(endpoint) {
-    try {
-        const response = await fetch(endpoint, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+async function synchronousCallWithLogging() {
+  const endpoints = [
+    'http://localhost:8080/api/users',
+    'http://localhost:8080/api/cart',
+    'http://localhost:8080/api/join'
+  ];
 
-        if (!response.ok) {
-            const errorDetails = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}. Details: ${errorDetails}`);
-        }
-
-        const data = await response.json();
-        console.log(`${new Date().toISOString()} - Response from ${endpoint}:`, data);
-        return data;
-    } catch (error) {
-        console.error(`Error fetching from ${endpoint}:`, error);
-        throw error;
-    }
+  for (const endpoint of endpoints) {
+    console.log(`Requesting from ${endpoint}`);
+    const response = await fetch(endpoint);
+    const data = await response.json();
+    console.log(`Response from ${endpoint}:`, data);
+  }
+  console.log("All synchronous requests are complete.");
 }
 
-async function demonstrateSynchronous(services) {
-    for (const service of services) {
-        await fetchData(service);
-    }
+synchronousCallWithLogging(); 
+
+
+async function asynchronousCallWithLogging() {
+  const endpoints = [
+    'http://localhost:8080/api/users',
+    'http://localhost:8080/api/cart',
+    'http://localhost:8080/api/join'
+  ];
+
+  for (let i = 0; i < 10; i++) {
+    console.log(`Iteration ${i + 1}`);
+
+    // Mapping each endpoint to a fetch request
+    const promises = endpoints.map(endpoint =>
+      fetch(endpoint).then(response => response.json())
+    );
+
+    // Waiting for all promises to resolve
+    const responses = await Promise.all(promises);
+
+    responses.forEach((data, index) => {
+      console.log(`Response from ${endpoints[index]} in iteration ${i + 1}:`, data);
+    });
+
+    console.log(`Completed iteration ${i + 1}`);
+  }
 }
 
-async function demonstrateAsynchronous(services) {
-    const promises = services.map(service => fetchData(service));
-    await Promise.all(promises);
-}
-
-(async function main() {
-    const services = ['http://localhost:8080/api/users', 'http://localhost:8080/api/cart', 'http://localhost:8080/api/join'];
-    const demoType = process.argv[2];
-
-    try {
-        if (demoType === 'sync') {
-            console.log("Starting synchronous demonstration:");
-            await demonstrateSynchronous(services);
-            console.log("Finished synchronous demonstration");
-        } else if (demoType === 'async') {
-            console.log("Starting asynchronous demonstration:");
-            for (let i = 0; i < 10; i++) {
-                console.log(`Asynchronous iteration: ${i + 1}`);
-                await demonstrateAsynchronous(services);
-            }
-            console.log("Finished asynchronous demonstration");
-        } else {
-            console.log("Please specify 'sync' or 'async' as a command line argument.");
-        }
-    } catch (error) {
-        console.error("Error during demonstration:", error);
-    }
-})();
+asynchronousCallWithLogging();
